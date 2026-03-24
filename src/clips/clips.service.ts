@@ -301,6 +301,47 @@ export class ClipsService {
   }
 
   /**
+   * Retry upload for a clip that failed Cloudinary upload
+   * Useful for manual intervention or scheduled retry jobs
+   */
+  async retryFailedUpload(clipId: string): Promise<{ success: boolean; error?: string }> {
+    const clip = this.findById(clipId);
+    
+    if (!clip) {
+      return { success: false, error: 'Clip not found' };
+    }
+
+    if (clip.status !== 'upload_failed') {
+      return { success: false, error: `Clip status is ${clip.status}, not upload_failed` };
+    }
+
+    if (!clip.localFilePath) {
+      return { success: false, error: 'No local file path available for retry' };
+    }
+
+    this.logger.log(`Retrying upload for clip ${clipId} from ${clip.localFilePath}`);
+    
+    // Re-enqueue the clip generation job to retry upload
+    // This will use the existing local file
+    const job: ClipGenerationJob = {
+      videoId: clip.videoId,
+      inputPath: '', // Not needed for retry
+      outputPath: clip.localFilePath,
+      startTime: clip.startTime,
+      endTime: clip.endTime,
+      positionRatio: clip.positionRatio,
+      transcript: clip.transcript,
+    };
+
+    try {
+      await this.enqueueClip(job);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: (error as any).message };
+    }
+  }
+
+  /**
    * Mark clip as failed for manual intervention/retry
    */
   markClipFailed(id: string, error: string): void {

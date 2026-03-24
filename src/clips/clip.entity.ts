@@ -23,10 +23,12 @@ export interface Clip {
   clipUrl?: string;
   /** Cloudinary thumbnail URL */
   thumbnail?: string;
-  /** Clip processing status: 'pending', 'processing', 'success', 'failed' */
-  status?: 'pending' | 'processing' | 'success' | 'failed';
+  /** Clip processing status: 'pending', 'processing', 'success', 'failed', 'upload_failed' */
+  status?: 'pending' | 'processing' | 'success' | 'failed' | 'upload_failed';
   /** Error message if upload/processing failed */
   error?: string;
+  /** Local file path as fallback when Cloudinary upload fails */
+  localFilePath?: string;
   /** Whether the user has curated/selected this clip for posting */
   selected: boolean;
   /** Freeform posting status — e.g. 'pending' | 'posted' | 'failed' or platform-specific JSON */

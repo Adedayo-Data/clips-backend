@@ -99,14 +99,39 @@ export class ClipGenerationProcessor extends WorkerHost {
           `viralityScore=${viralityScore}`,
       );
 
-      // Upload to Cloudinary
+      // Upload to Cloudinary with 2 retries
       const uploadResult = await this.uploadToCloudinary(
         data.outputPath,
         clipId,
       );
 
       if (uploadResult.error) {
-        throw new Error(`Cloudinary upload failed: ${uploadResult.error}`);
+        // Upload failed after all retries - keep local file as fallback
+        this.logger.error(
+          `Cloudinary upload failed after retries for ${clipId}: ${uploadResult.error}. ` +
+            `Keeping local file as fallback: ${data.outputPath}`,
+        );
+
+        // Return clip with upload_failed status and local file path
+        return {
+          id: clipId,
+          videoId: data.videoId,
+          userId: '', // populated by ClipsService after dequeue
+          startTime: data.startTime,
+          endTime: data.endTime,
+          positionRatio: data.positionRatio,
+          transcript: data.transcript,
+          viralityScore,
+          clipUrl: '', // No Cloudinary URL available
+          thumbnail: undefined,
+          status: 'upload_failed',
+          localFilePath: data.outputPath, // Keep local file as fallback
+          error: `Cloudinary upload failed: ${uploadResult.error}`,
+          selected: false,
+          postStatus: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
       }
 
       // Delete local temporary file after successful upload
@@ -139,13 +164,20 @@ export class ClipGenerationProcessor extends WorkerHost {
         (error as any).stack,
       );
 
-      // Attempt cleanup of local file
-      try {
-        await this.cloudinaryService.deleteLocalFile(data.outputPath);
-      } catch (cleanupError) {
-        this.logger.warn(
-          `Cleanup failed for ${data.outputPath}: ${(cleanupError as any).message}`,
-        );
+      // Only attempt cleanup if the error occurred before/during FFmpeg cut
+      // If upload failed, the file is already preserved in the success path
+      const errorMessage = (error as any).message || '';
+      const isUploadError = errorMessage.includes('Cloudinary') || errorMessage.includes('upload');
+      
+      if (!isUploadError) {
+        // Attempt cleanup of local file for non-upload errors
+        try {
+          await this.cloudinaryService.deleteLocalFile(data.outputPath);
+        } catch (cleanupError) {
+          this.logger.warn(
+            `Cleanup failed for ${data.outputPath}: ${(cleanupError as any).message}`,
+          );
+        }
       }
 
       // Re-throw to trigger BullMQ retry logic
@@ -154,7 +186,7 @@ export class ClipGenerationProcessor extends WorkerHost {
   }
 
   /**
-   * Upload clip to Cloudinary
+   * Upload clip to Cloudinary with 2 retries
    * @param filePath - Path to clip file
    * @param clipId - Unique clip identifier
    */
@@ -164,21 +196,24 @@ export class ClipGenerationProcessor extends WorkerHost {
   ): Promise<any> {
     try {
       const buffer = await this.cloudinaryService.readFileToBuffer(filePath);
+      // Upload with 2 retries (3 total attempts)
       const result = await this.cloudinaryService.uploadVideoFromBuffer(
         buffer,
         clipId,
+        {}, // default options
+        2, // 2 retries
       );
-
-      if (result.error) {
-        throw new Error(result.error);
-      }
 
       return result;
     } catch (error) {
       this.logger.error(
         `Upload to Cloudinary failed for ${clipId}: ${(error as any).message}`,
       );
-      throw error;
+      return {
+        error: (error as any).message,
+        secure_url: '',
+        public_id: clipId,
+      };
     }
   }
 

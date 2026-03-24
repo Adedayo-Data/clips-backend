@@ -16,6 +16,23 @@ jest.mock('./virality-score.util', () => ({
 
 import { cutClip } from './ffmpeg.util';
 
+// Mock CloudinaryService
+class MockCloudinaryService {
+  async readFileToBuffer() {
+    return Buffer.from('mock-video-data');
+  }
+  async uploadVideoFromBuffer() {
+    return {
+      secure_url: 'https://cloudinary.com/video.mp4',
+      thumbnail_url: 'https://cloudinary.com/thumb.jpg',
+      public_id: 'test-clip',
+    };
+  }
+  async deleteLocalFile() {
+    return;
+  }
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const JOB_DATA: ClipGenerationJob = {
@@ -40,9 +57,12 @@ function makeJob(overrides: Partial<Job<ClipGenerationJob>> = {}): Job<ClipGener
 
 function makeProcessor() {
   const emitter = new EventEmitter2();
+  const cloudinaryService = new MockCloudinaryService();
   jest.spyOn(emitter, 'emit');
-  const processor = new ClipGenerationProcessor(emitter);
-  return { processor, emitter };
+  jest.spyOn(cloudinaryService, 'uploadVideoFromBuffer');
+  jest.spyOn(cloudinaryService, 'deleteLocalFile');
+  const processor = new ClipGenerationProcessor(cloudinaryService as any, emitter);
+  return { processor, emitter, cloudinaryService };
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -80,6 +100,46 @@ describe('ClipGenerationProcessor', () => {
       const { processor } = makeProcessor();
 
       await expect(processor.process(makeJob())).rejects.toThrow('OOM');
+    });
+
+    it('returns clip with upload_failed status when Cloudinary upload fails', async () => {
+      const { processor, cloudinaryService } = makeProcessor();
+      jest.spyOn(cloudinaryService, 'uploadVideoFromBuffer').mockResolvedValue({
+        secure_url: '',
+        public_id: 'test-clip',
+        error: 'Network timeout',
+      });
+
+      const clip = await processor.process(makeJob());
+
+      expect(clip.status).toBe('upload_failed');
+      expect(clip.error).toContain('Cloudinary upload failed');
+      expect(clip.localFilePath).toBe('/tmp/out.mp4');
+      expect(clip.clipUrl).toBe('');
+    });
+
+    it('keeps local file when upload fails', async () => {
+      const { processor, cloudinaryService } = makeProcessor();
+      jest.spyOn(cloudinaryService, 'uploadVideoFromBuffer').mockResolvedValue({
+        secure_url: '',
+        public_id: 'test-clip',
+        error: 'Upload failed',
+      });
+      const deleteLocalFileSpy = jest.spyOn(cloudinaryService, 'deleteLocalFile');
+
+      await processor.process(makeJob());
+
+      // Should NOT delete local file when upload fails
+      expect(deleteLocalFileSpy).not.toHaveBeenCalled();
+    });
+
+    it('deletes local file after successful upload', async () => {
+      const { processor, cloudinaryService } = makeProcessor();
+      const deleteLocalFileSpy = jest.spyOn(cloudinaryService, 'deleteLocalFile');
+
+      await processor.process(makeJob());
+
+      expect(deleteLocalFileSpy).toHaveBeenCalledWith('/tmp/out.mp4');
     });
   });
 
