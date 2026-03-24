@@ -1,6 +1,10 @@
+export type PostStatus = 'pending' | 'posted' | 'failed' | Record<string, unknown>;
+
 export interface Clip {
   id: string;
   videoId: string;
+  /** Owner user ID — used to validate bulk-update requests */
+  userId: string;
   /** Start time of the clip in seconds */
   startTime: number;
   /** End time of the clip in seconds */
@@ -15,5 +19,10 @@ export interface Clip {
    * Replace with AI-model output once integrated.
    */
   viralityScore: number | null;
+  /** Whether the user has curated/selected this clip for posting */
+  selected: boolean;
+  /** Freeform posting status — e.g. 'pending' | 'posted' | 'failed' or platform-specific JSON */
+  postStatus: PostStatus | null;
   createdAt: Date;
+  updatedAt: Date;
 }
