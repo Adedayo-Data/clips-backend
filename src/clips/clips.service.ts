@@ -129,7 +129,25 @@ export class ClipsService {
    * Listener for the terminal clip-generation failure event.
    */
   @OnEvent(CLIP_GENERATION_FAILED_EVENT)
-  handleClipGenerationFailed(payload: ClipGenerationFailedPayload): void {
+  async handleClipGenerationFailed(payload: ClipGenerationFailedPayload): Promise<void> {
+    this.logger.error(`Clip generation failed for video ${payload.videoId}: ${payload.failedReason}`);
+
+    // Update Video status and processingError in Prisma
+    try {
+      await this.prisma.video.update({
+        where: { id: Number(payload.videoId) },
+        data: {
+          status: 'failed',
+          processingError: payload.failedReason,
+          updatedAt: new Date(),
+        },
+      });
+      this.logger.log(`Video ${payload.videoId} marked as failed in database`);
+    } catch (error) {
+      this.logger.error(`Failed to update video ${payload.videoId} status: ${(error as any).message}`);
+    }
+
+    // For legacy in-memory support (if still needed)
     const video = this.videos.get(payload.videoId);
     if (video) {
       if (video.status !== 'cancelled') {
