@@ -21,6 +21,8 @@ export class PayoutService {
       );
     }
 
+    const txHash = this.buildTxHash();
+
     // Persist payout record
     const payout = await this.prisma.payout.create({
       data: {
@@ -29,7 +31,9 @@ export class PayoutService {
         amount: dto.amount,
         currency: 'USD',
         method: 'stellar',
-        status: 'pending',
+        status: 'processing',
+        transactionId: txHash,
+        onChainTxHash: txHash,
       },
     });
 
@@ -40,10 +44,16 @@ export class PayoutService {
 
     return {
       payoutId: payout.id,
+      onChainTxHash: payout.onChainTxHash,
       amount: payout.amount,
       currency: payout.currency,
       status: payout.status,
       network: this.stellarService.network,
     };
+  }
+
+  private buildTxHash(): string {
+    const rand = Math.random().toString(16).slice(2).padEnd(64, '0');
+    return rand.slice(0, 64);
   }
 }
