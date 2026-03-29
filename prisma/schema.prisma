@@ -121,6 +121,8 @@ model Payout {
   method        String
   status        String
   transactionId String?
+  onChainTxHash String?
+  confirmedAt   DateTime?
   paidAt        DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

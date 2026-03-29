@@ -9,6 +9,7 @@ export class StellarService {
 
   readonly network: StellarNetwork;
   readonly rpcUrl: string;
+  readonly horizonUrl: string;
   readonly networkPassphrase: string;
 
   constructor() {
@@ -17,9 +18,11 @@ export class StellarService {
 
     if (this.network === 'public') {
       this.rpcUrl = 'https://soroban-rpc.stellar.org';
+      this.horizonUrl = 'https://horizon.stellar.org';
       this.networkPassphrase = 'Public Global Stellar Network ; September 2015';
     } else {
       this.rpcUrl = 'https://soroban-testnet.stellar.org';
+      this.horizonUrl = 'https://horizon-testnet.stellar.org';
       this.networkPassphrase = 'Test SDF Network ; September 2015';
     }
 
@@ -34,6 +37,38 @@ export class StellarService {
 
   isMainnet(): boolean {
     return this.network === 'public';
+  }
+
+  async getTransactionStatus(txHash: string): Promise<{
+    found: boolean;
+    successful?: boolean;
+    confirmedAt?: Date;
+  }> {
+    const response = await fetch(
+      `${this.horizonUrl}/transactions/${encodeURIComponent(txHash)}`,
+    );
+
+    if (response.status === 404) {
+      return { found: false };
+    }
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(
+        `Horizon lookup failed (${response.status}): ${body.slice(0, 300)}`,
+      );
+    }
+
+    const payload = (await response.json()) as {
+      successful?: boolean;
+      created_at?: string;
+    };
+
+    return {
+      found: true,
+      successful: Boolean(payload.successful),
+      confirmedAt: payload.created_at ? new Date(payload.created_at) : undefined,
+    };
   }
 
   /**
