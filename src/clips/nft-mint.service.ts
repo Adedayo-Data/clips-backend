@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StellarService } from '../stellar/stellar.service';
-import * as StellarSdk from 'stellar-sdk';
+import StellarSdk from '@stellar/stellar-sdk';
 
 interface NftAttribute {
   trait_type: string;
@@ -72,7 +72,9 @@ export class NftMintService {
 
     // Basic error handling: clip not ready
     if (!clip.clipUrl) {
-      throw new BadRequestException('Clip is not ready for minting (missing URL)');
+      throw new BadRequestException(
+        'Clip is not ready for minting (missing URL)',
+      );
     }
 
     // 2. Fetch user's Stellar wallet
@@ -171,7 +173,10 @@ export class NftMintService {
       const message =
         error instanceof Error ? error.message : 'unknown minting error';
       const stack = error instanceof Error ? error.stack : undefined;
-      this.logger.error(`Failed to prepare mint transaction: ${message}`, stack);
+      this.logger.error(
+        `Failed to prepare mint transaction: ${message}`,
+        stack,
+      );
       throw new BadRequestException(
         `Stellar transaction preparation failed: ${message}`,
       );
@@ -269,7 +274,9 @@ export class NftMintService {
 
     const cid = payload.IpfsHash ?? payload.cid ?? payload.hash;
     if (!cid) {
-      throw new BadRequestException('IPFS metadata upload response missing CID');
+      throw new BadRequestException(
+        'IPFS metadata upload response missing CID',
+      );
     }
 
     return `ipfs://${cid}`;
@@ -349,7 +356,9 @@ export class NftMintService {
       };
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Ownership verification failed';
+        error instanceof Error
+          ? error.message
+          : 'Ownership verification failed';
       this.logger.error(`Ownership verification failed: ${message}`);
       return {
         owned: false,

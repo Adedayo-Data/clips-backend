@@ -255,9 +255,7 @@ export class ClipsService {
 
       // Check if all clips for this video have postStatus = 'posted'
       // Note: postStatus in Prisma is Json, so we check if it's strictly 'posted'
-      const allPosted = videoClips.every(
-        (c) => (c.postStatus as any) === 'posted',
-      );
+      const allPosted = videoClips.every((c) => c.postStatus === 'posted');
 
       if (allPosted && videoClips.length > 0) {
         allClipsProcessed = true;

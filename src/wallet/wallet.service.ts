@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StrKey } from '@stellar/stellar-sdk';
 import { ConnectWalletDto } from './dto/connect-wallet.dto';
@@ -89,7 +93,9 @@ export class WalletService {
     if (!wallet) throw new NotFoundException(`Wallet ${id} not found`);
 
     if (wallet.chain !== 'stellar') {
-      throw new BadRequestException('Balance check only supported for Stellar wallets');
+      throw new BadRequestException(
+        'Balance check only supported for Stellar wallets',
+      );
     }
 
     const balance = await stellarService.getAccountBalance(wallet.address);

@@ -13,7 +13,10 @@ export class MintService {
     private readonly stellarService: StellarService,
   ) {}
 
-  async mintClip(clipId: number, userId: number): Promise<{ minted: boolean; clipId: number; network: string }> {
+  async mintClip(
+    clipId: number,
+    userId: number,
+  ): Promise<{ minted: boolean; clipId: number; network: string }> {
     const clip = await this.prisma.clip.findFirst({
       where: { id: clipId, video: { userId } },
     });
