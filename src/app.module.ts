@@ -18,6 +18,7 @@ import { WalletModule } from './wallet/wallet.module';
 import { MintModule } from './mint/mint.module';
 import { PayoutModule } from './payout/payout.module';
 import { StellarModule } from './stellar/stellar.module';
+import { NftModule } from './nft/nft.module';
 
 import { CsrfModule } from './csrf/csrf.module';
 import { EncryptionModule } from './encryption/encryption.module';
