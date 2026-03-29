@@ -20,6 +20,14 @@ import { PayoutModule } from './payout/payout.module';
 import { StellarModule } from './stellar/stellar.module';
 import { NftModule } from './nft/nft.module';
 
+import { CsrfModule } from './csrf/csrf.module';
+import { EncryptionModule } from './encryption/encryption.module';
+import { UserPlatformModule } from './user-platform/user-platform.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+
+import { NftModule } from './nft/nft.module';
+
+
 
 @Module({
   imports: [
@@ -65,7 +73,14 @@ import { NftModule } from './nft/nft.module';
     MintModule,
     PayoutModule,
     StellarModule,
+
+    CsrfModule,
+    EncryptionModule,
+    UserPlatformModule,
+    SubscriptionsModule,
+
     NftModule,
+
   ],
   controllers: [AppController],
   providers: [
