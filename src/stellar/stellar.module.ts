@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
-import { StellarConfig } from './stellar.config';
-import { StellarPaymentListener } from './stellar-payment.listener';
+import { StellarService } from './stellar.service';
+import { StellarPaymentListenerService } from './stellar-payment-listener.service';
+import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-  providers: [StellarConfig, StellarPaymentListener],
-  exports: [StellarConfig],
+  imports: [PrismaModule],
+  providers: [StellarService, StellarPaymentListenerService],
+  exports: [StellarService, StellarPaymentListenerService],
 })
 export class StellarModule {}
