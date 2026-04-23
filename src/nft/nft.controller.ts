@@ -9,8 +9,9 @@ export class NftController {
   /**
    * POST /nft/mint
    *
-   * Mints a clip as an NFT with split royalties.
-   * `royaltyBps` is optional (0–1500); defaults to 1000 (10%) when omitted.
+   * Mints a clip as an NFT with split royalties:
+   *   - Creator wallet  → CREATOR_ROYALTY_BPS  (default 1000 = 10%)
+   *   - Platform wallet → PLATFORM_ROYALTY_BPS (default  100 =  1%)
    */
   @Post('mint')
   @HttpCode(HttpStatus.CREATED)
