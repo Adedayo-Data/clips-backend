@@ -122,13 +122,18 @@ model Payout {
 }
 
 model Subscription {
-  id        Int       @id @default(autoincrement())
-  userId    Int
-  plan      String
-  status    String
-  startDate DateTime
-  endDate   DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  plan        String
+  status      String    @default("pending")
+  startDate   DateTime
+  endDate     DateTime?
+  /// Unique memo text sent in the Stellar payment transaction for matching
+  stellarMemo String?   @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([stellarMemo])
+  @@index([status])
 }
