@@ -62,6 +62,8 @@ model Clip {
   viralityScore Float?
   postStatus    Json?
   postedAt      DateTime?
+  /// Creator royalty in basis points (0–1500 = 0–15%). Defaults to 1000 (10%).
+  royaltyBps    Int       @default(1000)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   video         Video     @relation(fields: [videoId], references: [id], onDelete: Cascade)
