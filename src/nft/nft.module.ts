@@ -4,13 +4,14 @@ import { NftService } from './nft.service';
 import { NftController } from './nft.controller';
 import { RoyaltyQueryService } from './royalty-query.service';
 import { NftMintService } from '../clips/nft-mint.service';
+import { NftOwnershipService } from './nft-ownership.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { StellarModule } from '../stellar/stellar.module';
 
 @Module({
   imports: [PrismaModule, StellarModule],
-  providers: [NftConfig, NftService, NftMintService, RoyaltyQueryService],
+  providers: [NftConfig, NftService, NftMintService, RoyaltyQueryService, NftOwnershipService],
   controllers: [NftController],
-  exports: [NftService, NftMintService, RoyaltyQueryService],
+  exports: [NftService, NftMintService, RoyaltyQueryService, NftOwnershipService],
 })
 export class NftModule {}
