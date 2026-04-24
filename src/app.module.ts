@@ -64,6 +64,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     UserPlatformModule,
     SubscriptionsModule,
     NftModule,
+    PayoutsModule,
   ],
   controllers: [AppController],
   providers: [

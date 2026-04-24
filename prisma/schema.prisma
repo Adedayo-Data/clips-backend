@@ -129,6 +129,7 @@ model Payout {
   method        String
   status        String
   transactionId String?
+  stellarXdr    String?
   onChainTxHash String?
   confirmedAt   DateTime?
   paidAt        DateTime?
